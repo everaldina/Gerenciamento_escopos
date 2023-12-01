@@ -80,16 +80,16 @@ def lista_comandos(nome_arq):
 def declaracao(var):
     lexemas = []
     valores = []
-    atribuicoes = re.findall("[a-zA-Z][0-9a-zA-Z_]*=[^,]+", var)
-    inicializacoes = re.findall("[a-zA-Z][0-9a-zA-Z_][^,]", var)
+    atribuicoes = re.findall("[a-zA-Z][0-9a-zA-Z_]*=[^,]+|[a-zA-Z][0-9a-zA-Z_]*[^,]?", var)
     
-    for i in atribuicoes: # AT ->  ID = VALOR
-        lex, val = i.split("=")
-        lexemas.append(lex)
-        valores.append(val)
-    for i in inicializacoes: # AT ->  ID
-        lexemas.append(i[:len(i)-1])
-        valores.append(None)
+    for i in atribuicoes: 
+        separado = i.split("=")
+        if len(separado) == 2: # AT ->  ID = VALOR
+            lexemas.append(separado[0])
+            valores.append(separado[1])
+        else: # AT ->  ID
+            lexemas.append(separado[0])
+            valores.append(None)
     return lexemas, valores
 
 # verificar se no escopo atual já existe a variável
@@ -128,5 +128,14 @@ def tipo(valor):
         return "NUMERO"
     except ValueError:
         raise Exception()
-    
+
+def print_tabela(tabela):
+    print(f"{tabela['tipo']} {tabela['lexema']} = {tabela['valor']} | {tabela['bloco']}")
+
+def print_pilha(pilha):
+    print("PILHA:---------------")
+    for i in pilha:
+        for j in i:
+            print_tabela(j)
+    print("FIM PILHA-----------")
 gerenciamento("teste.txt")
