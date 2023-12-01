@@ -1,62 +1,71 @@
 import re
 
 def gerenciamento(nome_arq):
-    pilha = []
-    count_linhas = 0
-    reservadas = ["BLOCO", "NUMERO", "CADEIA", "PRINT", "FIM"]
+    pilha = [[]]
+    count_linhas = 1
     instrucoes = lista_comandos(nome_arq)
     for linha in instrucoes:
+        #print(f"linha {count_linhas}: {linha}")
         partes = linha.split()
 
-        match partes[0]:
-            case "BLOCO":
-                bloco = partes[1]
-            case "NUMERO":
-                var = "".join(partes[1:])
-                lexemas, valores = declaracao(var)
-                tabela = []
-                for lexema, valor in zip(lexemas, valores):
-                    if(tipo(valor) != "NUMERO"):
-                        print(f"Erro (linha {count_linhas}): valor não numérico")
-                        break
+        if len(partes) == 0:
+            count_linhas += 1
+        else:
+            match partes[0]:
+                case "BLOCO":
+                    bloco = partes[1]
+                    pilha.append([])
+                    #print(f"(linha {count_linhas}) entrando no bloco: {bloco}")
+                case "NUMERO":
+                    var = "".join(partes[1:])
+                    lexemas, valores = declaracao(var)
+                    tabela = []
+                    for lexema, valor in zip(lexemas, valores):
+                        try:
+                            if(tipo(valor) == "NUMERO" or valor == None):
+                                tabela.append({"lexema": lexema, "valor": valor, "tipo": "NUMERO", "bloco": bloco})
+                                #print(f"Adcionando {lexema} = {valor}")
+                        except Exception as ex:
+                            print(f"Erro (linha {count_linhas}): valor não numérico")
+                            break
+                    if escopo_criacao(tabela, pilha):
+                        pilha[len(pilha)-1].extend(tabela)
+                        #print(f"Apendando no : {bloco}")
                     else:
-                        tabela.append({"lexema": lexema, "valor": valor, "tipo": "NUMERO", "bloco": bloco})
-                if escopo_criacao(tabela, pilha):
-                    pilha.append(tabela)
-                else:
-                    print(f"Erro (linha {count_linhas}): variável já declarada")
-            case "CADEIA":
-                var = "".join(partes[1:])
-                lexemas, valores = declaracao(var)
-                tabela = []
-                for lexema, valor in zip(lexemas, valores):
-                    if(tipo(valor) != "CADEIA"):
-                        print(f"Erro (linha {count_linhas}): valor não é uma cadeia")
+                        print(f"Erro (linha {count_linhas}): variável já declarada")
+                case "CADEIA":
+                    var = "".join(partes[1:])
+                    lexemas, valores = declaracao(var)
+                    tabela = []
+                    for lexema, valor in zip(lexemas, valores):
+                        if(tipo(valor) == "CADEIA" or valor == None):
+                            tabela.append({"lexema": lexema, "valor": valor, "tipo": "CADEIA", "bloco": bloco})
+                            #print(f"Adcionando {lexema} = {valor}")
+                        else:
+                            print(f"Erro (linha {count_linhas}): valor não é cadeia")
                         break
+                    if escopo_criacao(tabela, pilha):
+                        pilha[len(pilha)-1].extend(tabela)
+                        #print(f"Apendando no : {bloco}")
                     else:
-                        tabela.append({"lexema": lexema, "valor": valor, "tipo": "CADEIA", "bloco": bloco})
-                if escopo_criacao(tabela, pilha):
-                    pilha.append(tabela)
-                else:
-                    print(f"Erro (linha {count_linhas}): variável já declarada")
-            case "PRINT":
-                var = partes[1]
-                try:
-                    valor = busca_variavel(var, pilha, count_linhas)
-                    print(f"PRINT (linha {count_linhas}): {valor}")
-                except Exception as ex:
-                    print(str(ex))
-            case "FIM":
-                pilha.pop()
-            case "\n":
-                pass
-            case _:
-                try:
-                    var, valor = linha.split("=")
-                    atribuicao(var, valor, pilha, count_linhas)
-                except ValueError:
-                    print(f"Erro (linha {count_linhas}): comando inválido")
-        count_linhas += 1      
+                        print(f"Erro (linha {count_linhas}): variável já declarada")
+                case "PRINT":
+                    var = partes[1]
+                    try:
+                        valor = busca_variavel(var, pilha, count_linhas)
+                        print(f"PRINT (linha {count_linhas}): {valor}")
+                    except Exception as ex:
+                        print(str(ex))
+                case "FIM":
+                    #print(f"(linha {count_linhas}) saindo do bloco: {bloco}")
+                    pilha.pop()
+                case _:
+                    try:
+                        var, valor = linha.split("=")
+                        atribuicao(var, valor, pilha, count_linhas)
+                    except Exception as ex:
+                        print(str(ex))
+            count_linhas += 1      
     
     
 def lista_comandos(nome_arq):
@@ -67,14 +76,20 @@ def lista_comandos(nome_arq):
     arquivo.close()
     return lista
 
+# AT ->  ID = VALOR | ID
 def declaracao(var):
     lexemas = []
     valores = []
-    atribuicoes = re.findall("[a-zA-Z][0-9a-zA-Z_]*=.+", var)
-    for i in atribuicoes:
+    atribuicoes = re.findall("[a-zA-Z][0-9a-zA-Z_]*=[^,]+", var)
+    inicializacoes = re.findall("[a-zA-Z][0-9a-zA-Z_][^,]", var)
+    
+    for i in atribuicoes: # AT ->  ID = VALOR
         lex, val = i.split("=")
         lexemas.append(lex)
         valores.append(val)
+    for i in inicializacoes: # AT ->  ID
+        lexemas.append(i[:len(i)-1])
+        valores.append(None)
     return lexemas, valores
 
 # verificar se no escopo atual já existe a variável
@@ -104,10 +119,14 @@ def atribuicao(variavel, valor, pilha, linha):
     raise Exception(f"Erro (linha {linha}): variável '{variavel}' não declarada")
 
 def tipo(valor):
+    if valor == None:
+        return None
     if valor[0] == '"' and valor[len(valor)-1] == '"':
         return "CADEIA"
     try:
         float(valor)
         return "NUMERO"
     except ValueError:
-        return None
+        raise Exception()
+    
+gerenciamento("teste.txt")
