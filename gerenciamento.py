@@ -1,3 +1,5 @@
+import re
+
 def gerenciamento(nome_arq):
     pilha = []
     count_linhas = 0
@@ -14,7 +16,12 @@ def gerenciamento(nome_arq):
                 lexemas, valores = atribuicao(var)
                 tabela = []
                 for lexema, valor in zip(lexemas, valores):
-                    tabela.append({"lexema": lexema, "valor": valor, "tipo": "NUMERO", "bloco": bloco})
+                    try: # verifica se o valor é numérico
+                        valor = float(valor)
+                        tabela.append({"lexema": lexema, "valor": valor, "tipo": "NUMERO", "bloco": bloco})
+                    except ValueError:
+                        print(f"Erro (linha {count_linhas}): valor não numérico")
+                        break
                 if escopo_criacao(tabela, pilha):
                     pilha.append(tabela)
                 else:
@@ -24,7 +31,11 @@ def gerenciamento(nome_arq):
                 lexemas, valores = atribuicao(var)
                 tabela = []
                 for lexema, valor in zip(lexemas, valores):
-                    tabela.append({"lexema": lexema, "valor": valor, "tipo": "CADEIA", "bloco": bloco})
+                    if valor[0] == '"' and valor[len(valor)-1] == '"':  # verifica se o valor é uma cadeia
+                        tabela.append({"lexema": lexema, "valor": valor, "tipo": "CADEIA", "bloco": bloco})
+                    else:
+                        print(f"Erro (linha {count_linhas}): valor não é uma cadeia")
+                        break
                 if escopo_criacao(tabela, pilha):
                     pilha.append(tabela)
                 else:
@@ -56,15 +67,11 @@ def lista_comandos(nome_arq):
 def atribuicao(var):
     lexemas = []
     valores = []
-    posicao_separador = 0
-    posicao_igual = 0
-    for i in range(len(var)):
-        if var[i] == "=":
-            posicao_igual = i
-            lexemas.append(var[posicao_separador:posicao_igual])
-        if var[i] == ",":
-            posicao_separador = i
-            valores.append(var[posicao_igual+1:posicao_separador-1])
+    atribuicoes = re.findall("[a-zA-Z][0-9a-zA-Z_]*=.+", var)
+    for i in atribuicoes:
+        lex, val = i.split("=")
+        lexemas.append(lex)
+        valores.append(val)
     return lexemas, valores
 
 # verificar se no escopo atual já existe a variável
