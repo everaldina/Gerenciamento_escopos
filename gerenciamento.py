@@ -62,7 +62,8 @@ def gerenciamento(nome_arq):
                 case _:
                     try:
                         var, valor = linha.split("=")
-                        atribuicao(var, valor, pilha, count_linhas)
+                        #print_pilha(pilha)
+                        atribuicao(var.strip(), valor.strip(), pilha, count_linhas)
                     except Exception as ex:
                         print(str(ex))
             count_linhas += 1      
@@ -76,7 +77,7 @@ def lista_comandos(nome_arq):
     arquivo.close()
     return lista
 
-# AT ->  ID = VALOR | ID
+# AT ->  ID = CONST | ID
 def declaracao(var):
     lexemas = []
     valores = []
@@ -84,7 +85,7 @@ def declaracao(var):
     
     for i in atribuicoes: 
         separado = i.split("=")
-        if len(separado) == 2: # AT ->  ID = VALOR
+        if len(separado) == 2: # AT ->  ID = CONST
             lexemas.append(separado[0])
             valores.append(separado[1])
         else: # AT ->  ID
@@ -108,18 +109,23 @@ def busca_variavel(variavel, pilha, linha):
     raise Exception(f"Erro (linha {linha}): variável '{variavel}' não declarada")
 
 def atribuicao(variavel, valor, pilha, linha):
+    try: # teste de regra atribuicao AT -> ID = CONST | ID
+        tipo_var = tipo(valor)
+    except Exception as ex:
+        raise Exception(f"Erro (linha {linha}): não existe regra de atribuiçao 'AT -> ID = ID'")
+        
     for i in pilha[len(pilha)-1:0:-1]: # percorre a pilha do topo pra baixo
         for tabela in i:
             if tabela["lexema"] == variavel:
-                if tabela["tipo"] == tipo(valor):
+                if tabela["tipo"] == tipo_var:
                     tabela["valor"] = valor
+                    return
                 else:
                     raise Exception(f"Erro (linha {linha}): valor não é do tipo '{tabela['tipo']}'")
-                return
     raise Exception(f"Erro (linha {linha}): variável '{variavel}' não declarada")
 
 def tipo(valor):
-    if valor == None:
+    if valor is None:
         return None
     if valor[0] == '"' and valor[len(valor)-1] == '"':
         return "CADEIA"
