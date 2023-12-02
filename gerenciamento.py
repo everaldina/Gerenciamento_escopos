@@ -122,7 +122,8 @@ def atribuicao(variavel, valor, pilha, linha):
                     return
                 else:
                     raise Exception(f"Erro (linha {linha}): valor não é do tipo '{tabela['tipo']}'")
-    raise Exception(f"Erro (linha {linha}): variável '{variavel}' não declarada")
+    # se não encontrar a variável na pilha, cria uma nova
+    pilha[len(pilha)-1].append({"lexema": variavel, "valor": valor, "tipo": tipo_var, "bloco": "global"})
 
 def tipo(valor):
     if valor is None:
@@ -144,4 +145,6 @@ def print_pilha(pilha):
         for j in i:
             print_tabela(j)
     print("FIM PILHA-----------")
+
+
 gerenciamento("teste.txt")
