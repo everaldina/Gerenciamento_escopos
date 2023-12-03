@@ -1,0 +1,18 @@
+(linha 6): 20
+(linha 7): 10
+(linha 9): não existe regra de atribuiçao 'AT -> ID = ID'
+(linha 10): "Ola mundo"
+(linha 16): 20
+(linha 17): -0.45
+(linha 24): 10
+(linha 25): "Compiladores"
+(linha 28): "Bloco2"
+(linha 29): variável 'c' não declarada
+(linha 33): -0.28
+(linha 34): "Compiladores"
+(linha 35): -0.28
+(linha 37): "Compiladores"
+(linha 38): não existe regra de atribuiçao 'AT -> ID = ID'
+(linha 39): variável 'e' não declarada
+(linha 44): variável 'c' não declarada
+(linha 45): 11
