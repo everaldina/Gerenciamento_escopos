@@ -5,7 +5,6 @@ def gerenciamento(nome_arq):
     count_linhas = 1
     instrucoes = lista_comandos(nome_arq)
     for linha in instrucoes:
-        #print(f"linha {count_linhas}: {linha}")
         partes = linha.split()
 
         if len(partes) == 0:
@@ -15,7 +14,6 @@ def gerenciamento(nome_arq):
                 case "BLOCO":
                     bloco = partes[1]
                     pilha.append([])
-                    #print(f"(linha {count_linhas}) entrando no bloco: {bloco}")
                 case "NUMERO":
                     var = "".join(partes[1:])
                     lexemas, valores = declaracao(var)
@@ -26,13 +24,13 @@ def gerenciamento(nome_arq):
                                 tabela.append({"lexema": lexema, "valor": valor, "tipo": "NUMERO", "bloco": bloco})
                                 #print(f"Adcionando {lexema} = {valor}")
                         except Exception as ex:
-                            print(f"Erro (linha {count_linhas}): valor não numérico")
+                            print(f"(linha {count_linhas:>2}) Erro: valor não numérico")
                             break
                     if escopo_criacao(tabela, pilha):
                         pilha[len(pilha)-1].extend(tabela)
                         #print(f"Apendando no : {bloco}")
                     else:
-                        print(f"Erro (linha {count_linhas}): variável já declarada")
+                        print(f"(linha {count_linhas:>2}) Erro: variável já declarada")
                 case "CADEIA":
                     var = "".join(partes[1:])
                     lexemas, valores = declaracao(var)
@@ -42,27 +40,25 @@ def gerenciamento(nome_arq):
                             tabela.append({"lexema": lexema, "valor": valor, "tipo": "CADEIA", "bloco": bloco})
                             #print(f"Adcionando {lexema} = {valor}")
                         else:
-                            print(f"Erro (linha {count_linhas}): valor não é cadeia")
+                            print(f"(linha {count_linhas}) Erro: valor não é cadeia")
                         break
                     if escopo_criacao(tabela, pilha):
                         pilha[len(pilha)-1].extend(tabela)
                         #print(f"Apendando no : {bloco}")
                     else:
-                        print(f"Erro (linha {count_linhas}): variável já declarada")
+                        print(f"(linha {count_linhas}) Erro: variável já declarada")
                 case "PRINT":
                     var = partes[1]
                     try:
                         valor = busca_variavel(var, pilha, count_linhas)
-                        print(f"PRINT (linha {count_linhas}): {valor}")
+                        print(f"(linha {count_linhas:>2}) PRINT '{var}': {valor}")
                     except Exception as ex:
                         print(str(ex))
                 case "FIM":
-                    #print(f"(linha {count_linhas}) saindo do bloco: {bloco}")
                     pilha.pop()
                 case _:
                     try:
                         var, valor = linha.split("=")
-                        #print_pilha(pilha)
                         atribuicao(var.strip(), valor.strip(), pilha, count_linhas)
                     except Exception as ex:
                         print(str(ex))
@@ -106,13 +102,13 @@ def busca_variavel(variavel, pilha, linha):
         for tabela in i:
             if tabela["lexema"] == variavel:
                 return tabela["valor"]
-    raise Exception(f"Erro (linha {linha}): variável '{variavel}' não declarada")
+    raise Exception(f"(linha {linha:>2}) Erro: variável '{variavel}' não declarada")
 
 def atribuicao(variavel, valor, pilha, linha):
     try: # teste de regra atribuicao AT -> ID = CONST | ID
         tipo_var = tipo(valor)
     except Exception as ex:
-        raise Exception(f"Erro (linha {linha}): não existe regra de atribuiçao 'AT -> ID = ID'")
+        raise Exception(f"(linha {linha:>2}) Erro: não existe regra de atribuiçao 'AT -> ID = ID'")
         
     for i in pilha[len(pilha)-1:0:-1]: # percorre a pilha do topo pra baixo
         for tabela in i:
@@ -121,7 +117,7 @@ def atribuicao(variavel, valor, pilha, linha):
                     tabela["valor"] = valor
                     return
                 else:
-                    raise Exception(f"Erro (linha {linha}): valor não é do tipo '{tabela['tipo']}'")
+                    raise Exception(f"(linha {linha:>2}) Erro: valor não é do tipo '{tabela['tipo']}'")
     # se não encontrar a variável na pilha, cria uma nova
     pilha[len(pilha)-1].append({"lexema": variavel, "valor": valor, "tipo": tipo_var, "bloco": "global"})
 
@@ -147,4 +143,10 @@ def print_pilha(pilha):
     print("FIM PILHA-----------")
 
 
-gerenciamento("teste.txt")
+def main():
+    nome_arq = "exemplo.txt"
+    gerenciamento(nome_arq)
+    
+    
+if __name__ == "__main__":
+    main()
